@@ -19,7 +19,7 @@
 
 <!-- DTD for CAIRIS XML model file -->
 
-<!ELEMENT cairis_model (tvtypes?,domainvalues?,cairis?,riskanalysis?,usability?,goals?,associations?,synopses?,misusability?,dataflows?,locations?,stories?)>
+<!ELEMENT cairis_model (tvtypes?,domainvalues?,cairis?,riskanalysis?,usability?,goals?,associations?,synopses?,misusability?,dataflows?,locations?)>
 
 <!ELEMENT tvtypes (vulnerability_type+,threat_type+)>
 <!ELEMENT vulnerability_type (description)>
@@ -87,7 +87,7 @@
 <!ELEMENT riskanalysis (role*,asset*,vulnerability*,attacker*,threat*,risk*,response*,asset_association*)>
 <!ELEMENT role (description)>
 <!ATTLIST role name CDATA #REQUIRED>
-<!ATTLIST role type (Stakeholder | Attacker | Data Controller | Data Processor | Data Subject | Machine) #REQUIRED>
+<!ATTLIST role type (Stakeholder | Attacker) #REQUIRED>
 <!ATTLIST role short_code CDATA #REQUIRED>
 
 <!ELEMENT tag EMPTY>
@@ -318,7 +318,7 @@
 <!ATTLIST usecase code CDATA #REQUIRED>
 <!ELEMENT actor EMPTY>
 <!ATTLIST actor name CDATA #REQUIRED>
-<!ELEMENT usecase_environment (preconditions,flow,postconditions)>
+<!ELEMENT usecase_environment (preconditions,flow,postconditions,cognitive_attribute*)>
 <!ATTLIST usecase_environment name CDATA #REQUIRED>
 <!ELEMENT preconditions (#PCDATA)>
 <!ELEMENT flow (step+)>
@@ -331,7 +331,11 @@
 <!ATTLIST exception value CDATA #IMPLIED>
 <!ATTLIST exception category (Confidentiality_Threat | Integrity_Threat | Availability_Threat | Accountability_Threat | Vulnerability | Duration | Frequency | Demands | Goal_Support | Anonymity_Threat | Pseudonymity_Threat | Unlinkability_Threat | Unobservability_Threat | Threat ) #IMPLIED>
 <!ELEMENT postconditions (#PCDATA)>
-
+<!ELEMENT cognitive_attribute (rationale)>
+<!ATTLIST cognitive_attribute attribute (vigilance | situation awareness | workload | stress | risk awareness) #REQUIRED>
+<!ATTLIST cognitive_attribute value (None | Low | Medium | High) #REQUIRED>
+<!ELEMENT average (rationale)>
+<!ATTLIST average value CDATA #REQUIRED>
 
 <!ELEMENT countermeasure (tag*,description,countermeasure_environment+)>
 <!ATTLIST countermeasure name CDATA #REQUIRED>
@@ -377,6 +381,11 @@
 <!ATTLIST goal_association subgoal_name CDATA #REQUIRED>
 <!ATTLIST goal_association subgoal_dim (goal | task | usecase | requirement | obstacle | domainproperty | threat | vulnerability | role) #REQUIRED>
 <!ATTLIST goal_association alternative_id (0 | 1) #REQUIRED>
+
+<!ELEMENT usecase_association (rationale)>
+<!ATTLIST usecase_association environment CDATA #REQUIRED>
+<!ATTLIST usecase_association usecase_name CDATA #REQUIRED>
+<!ATTLIST usecase_association subusecase_name CDATA #REQUIRED>
 
 <!ELEMENT dependency (rationale)>
 <!ATTLIST dependency depender CDATA #REQUIRED>
@@ -482,11 +491,3 @@
 
 <!ELEMENT link EMPTY>
 <!ATTLIST link name CDATA #REQUIRED>
-
-<!ELEMENT stories (userstory*)>
-<!ELEMENT userstory (description,user_goal,acceptance_criteria+)>
-<!ELEMENT userstory name CDATA #REQUIRED)
-<!ELEMENT userstory author CDATA #REQUIRED)
-<!ELEMENT userstory role CDATA #REQUIRED)
-<!ELEMENT user_goal (#PCDATA)>
-<!ELEMENT acceptance_criteria (#PCDATA)>
