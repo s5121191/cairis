@@ -72,6 +72,7 @@ from .MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
 from .RoleEnvironmentProperties import RoleEnvironmentProperties
 from .ClassAssociationParameters import ClassAssociationParameters
 from .GoalAssociationParameters import GoalAssociationParameters
+from .UsecaseAssociationParameters import UsecaseAssociationParameters
 from .DependencyParameters import DependencyParameters
 from .GoalEnvironmentProperties import GoalEnvironmentProperties
 from .ObstacleEnvironmentProperties import ObstacleEnvironmentProperties
@@ -108,7 +109,6 @@ from .TrustBoundary import TrustBoundary
 from .ValidationResult import ValidationResult
 from .GoalContribution import GoalContribution
 from .TaskContribution import TaskContribution
-from .UserStory import UserStory
 from cairis.tools.PseudoClasses import RiskRating
 import string
 import os
@@ -540,6 +540,19 @@ class MySQLDatabaseProxy:
     sqlTxt = 'call add_' + dimTable + '_properties(:obj,:env,:cPr,:iPr,:avPr,:acPr,:anPr,:panPr,:unlPr,:unoPr,:cRa,:iRa,:avRa,:acRa,:anRa,:panRa,:unlRa,:unoRa)'
     self.updateDatabase(sqlTxt,{'obj':objtId,'env':environmentName,'cPr':securityProperties[C_PROPERTY],'iPr':securityProperties[I_PROPERTY],'avPr':securityProperties[AV_PROPERTY],'acPr':securityProperties[AC_PROPERTY],'anPr':securityProperties[AN_PROPERTY],'panPr':securityProperties[PAN_PROPERTY],'unlPr':securityProperties[UNL_PROPERTY],'unoPr':securityProperties[UNO_PROPERTY],'cRa':pRationale[C_PROPERTY],'iRa':pRationale[I_PROPERTY],'avRa':pRationale[AV_PROPERTY],'acRa':pRationale[AC_PROPERTY],'anRa':pRationale[AN_PROPERTY],'panRa':pRationale[PAN_PROPERTY],'unlRa':pRationale[UNL_PROPERTY],'unoRa':pRationale[UNO_PROPERTY]},'MySQL error adding security properties for ' + dimTable)
 
+  def addCognitiveAttributes(self,objtId,environmentName,cognitiveAttributes,aRationale):
+    sqlTxt = 'call add_usecase_attributes(:obj,:env,:vCA,:saCA,:wCA,:sCA,:raCA,:vRa,:saRa,:wRa,:sRa,:raRa)'
+    self.updateDatabase(sqlTxt,{'obj':objtId,'env':environmentName,'vCA':cognitiveAttributes[V_ATTRIBUTE],'saCA':cognitiveAttributes[SA_ATTRIBUTE],'wCA':cognitiveAttributes[W_ATTRIBUTE],'sCA':cognitiveAttributes[S_ATTRIBUTE],'raCA':cognitiveAttributes[RA_ATTRIBUTE],'vRa':aRationale[V_ATTRIBUTE],'saRa':aRationale[SA_ATTRIBUTE],'wRa':aRationale[W_ATTRIBUTE],'sRa':aRationale[S_ATTRIBUTE],'raRa':aRationale[RA_ATTRIBUTE]},'MySQL error adding cognitive attributes for use case')
+
+  def relatedAttributes(self,objtId,environmentId):
+    callTxt = 'call usecaseAttributes (:objtId,:envId)'
+    argDict = {'objtId':objtId,'envId':environmentId}
+    row = self.responseList(callTxt,argDict,'MySQL error getting related properties')[0]
+    cognitiveAttributes = []
+    cognitiveAttributes =  array((row[0],row[1],row[2],row[3],row[4])).astype(int32) 
+    aRationale =  [row[5],row[6],row[7],row[8],row[9]]
+    return (cognitiveAttributes,aRationale)
+  
   def deleteAsset(self,assetId):
     self.deleteObject(assetId,'asset')
     
@@ -568,7 +581,6 @@ class MySQLDatabaseProxy:
     elif (dimensionTable == 'persona'): objts = self.getPersonas(constraintId)
     elif (dimensionTable == 'task'): objts = self.getTasks(constraintId)
     elif (dimensionTable == 'usecase'): objts = self.getUseCases(constraintId)
-    elif (dimensionTable == 'userstory'): objts = self.getUserStories(constraintId)
     elif (dimensionTable == 'misusecase'): objts = self.getMisuseCases(constraintId)
     elif (dimensionTable == 'requirement'): return self.getRequirement(constraintName)
     elif (dimensionTable == 'environment'): objts = self.getEnvironments(constraintId)
@@ -1881,6 +1893,10 @@ class MySQLDatabaseProxy:
   def taskModelElements(self,envName):
     return self.responseList('call taskModelElements(:env)',{'env':envName},'MySQL error getting task model elements')
 
+  def usecaseModelElements(self,envName):
+    return self.responseList('call usecaseModelElements(:env)',{'env':envName},'MySQL error getting usecase model elements')
+
+
   def classModelElements(self,envName,hideConcerns = False):
     callTxt = ''
     argDict = {'env':envName}
@@ -1986,8 +2002,9 @@ class MySQLDatabaseProxy:
     else:
       return self.goalTreeAssociations('call obstacleTree(:id1,:id2,:id3,:id4)',goalName,envName,topLevelGoals)
  
-
-
+  def usecaseModel(self,envName,usecaseName = ''):
+      return self.usecaseAssociations('call usecaseModel(:id)',envName)
+    
   def taskModel(self,envName,taskName = '',mcFilter=False):
     if (taskName == ''):
       return self.goalAssociations('call taskModel(:id)',envName)
@@ -2019,6 +2036,18 @@ class MySQLDatabaseProxy:
       asLabel = envName + '/' + goalName + '/' + subGoalName + '/' + aType
       associations[asLabel] = association
     return associations
+
+
+  def usecaseAssociations(self,procName,constraintId = ''):
+    rows = self.responseList(procName,{'id':constraintId},'MySQL error getting usecase associations')
+    associations = {}
+    for associationId,envName,ucName,subUcName,rationale in rows:
+      parameters = UsecaseAssociationParameters(envName,ucName,subUcName,rationale)
+      association = ObjectFactory.build(associationId,parameters)
+      asLabel = envName + '/' + ucName + '/' + subUcName 
+      associations[asLabel] = association
+    return associations
+
 
   def riskObstacleModel(self,riskName,envName):
     rows = self.responseList('call riskObstacleTree(:risk,:env,0)',{'risk':riskName,'env':envName},'MySQL error getting risk obstacle model')
@@ -2073,6 +2102,26 @@ class MySQLDatabaseProxy:
 
   def deleteGoalAssociation(self,associationId,goalDimName,subGoalDimName):
     self.updateDatabase('call delete_goalassociation(:ass,:gDName,:sGDName)',{'ass':associationId,'gDName':goalDimName,'sGDName':subGoalDimName},'MySQL error deleting goal association')
+
+  def addUsecaseAssociation(self,parameters):
+    associationId = self.newId()
+    envName = parameters.environment()
+    usecaseName = parameters.usecase()
+    subUsecaseName = parameters.subUsecase()
+    rationale = parameters.rationale()
+    self.updateDatabase('call addUsecaseAssociation(:assId,:env,:ucName,:sUcName,:rationale)',{'assId':associationId,'env':envName,'ucName':usecaseName,'sUcName':subUsecaseName,'rationale':rationale},'MySQL error adding usecase association')
+    return associationId
+
+  def updateUsecaseAssociation(self,parameters):
+    associationId = parameters.id()
+    envName = parameters.environment()
+    usecaseName = parameters.usecase()
+    subUsecaseName = parameters.subUsecase()
+    rationale = parameters.rationale()
+    self.updateDatabase('call addUsecaseAssociation(:assId,:env,:ucName,:sUcName,:rationale)',{'assId':associationId,'env':envName,'ucName':usecaseName,'sUcName':subUsecaseName,'rationale':rationale},'MySQL error adding usecase association')
+    
+  def deleteUsecaseAssociation(self,associationId,ucName,subUcName):
+    self.updateDatabase('call delete_usecaseassociation(:ass,:ucName,:sUcName)',{'ass':associationId,'ucName':ucName,'sUcName':subUcName},'MySQL error deleting usecase association')
 
   def addGoalDefinition(self,goalId,environmentName,goalDef):
     self.updateDatabase('call addGoalDefinition(:gId,:env,:gDef)',{'gId':goalId,'env':environmentName,'gDef':goalDef},'MySQL error adding goal definition')
@@ -2283,6 +2332,16 @@ class MySQLDatabaseProxy:
     obsRationale = row[1]
     return obsAttr,obsRationale
 
+  def usecaseDefinition(self,UsecaseId,environmentId):
+    UsecaseDef = self.responseList('select usecase_definition(:uId,:eId)',{'uId':UsecaseId,'eId':environmentId},'MySQL error getting usecase definition')[0]
+    UsecaseAvg = self.usecaseAverage(UsecaseId,environmentId)
+    return (UsecaseDef,UsecaseAvg)
+
+  def usecaseAverage(self,UsecaseId,environmentId):
+    row = self.responseList('call usecase_average(:uId,:eId)',{'uId':UsecaseId,'eId':environmentId},'MySQL error getting usecase average')[0]
+    usecaseAttr = row[0]
+    return usecaseAttr
+
   def obstacleCategory(self,obsId,environmentId):
     return self.responseList('select obstacle_category(:oId,:eId)',{'oId':obsId,'eId':environmentId},'MySQL error getting obstacle category')[0]
 
@@ -2324,6 +2383,9 @@ class MySQLDatabaseProxy:
 
   def addObstacleDefinition(self,obsId,environmentName,obsDef,obsProb,obsProbRat):
     self.updateDatabase('call addObstacleDefinition(:id,:env,:def,:prob,:probRat)',{'id':obsId,'env':environmentName,'def':obsDef,'prob':obsProb,'probRat':obsProbRat},'MySQL error adding obstacle definition')
+
+  def addUsecaseDefinition(self,ucId,environmentName,ucDef,ucAvg):
+    self.updateDatabase('call addUsecaseDefinition(:id,:env,:def,:avg)',{'id':ucId,'env':environmentName,'def':ucDef,'avg':ucAvg},'MySQL error adding usecase definition')
 
   def addObstacleCategory(self,obsId,environmentName,obsCat):
     self.updateDatabase('call addObstacleCategory(:obs,:env,:cat)',{'obs':obsId,'env':environmentName,'cat':obsCat},'MySQL error adding obstacle category')
@@ -2968,7 +3030,9 @@ class MySQLDatabaseProxy:
       for environmentId,environmentName in self.dimensionEnvironments(ucId,'usecase'):
         preConds,postConds = self.useCaseConditions(ucId,environmentId)
         ucSteps = self.useCaseSteps(ucId,environmentId)
-        properties = UseCaseEnvironmentProperties(environmentName,preConds,ucSteps,postConds)
+        cognitiveAttributes,aRationale = self.relatedAttributes(ucId,environmentId)
+        ucDef,ucAvg = self.usecaseDefinition(ucId,environmentId)
+        properties = UseCaseEnvironmentProperties(environmentName,preConds,ucSteps,postConds,cognitiveAttributes,aRationale,ucDef,ucAvg)
         environmentProperties.append(properties)
         parameters = UseCaseParameters(ucName,ucAuth,ucCode,ucRoles,ucDesc,tags,environmentProperties)
         uc = ObjectFactory.build(ucId,parameters)
@@ -3025,8 +3089,12 @@ class MySQLDatabaseProxy:
       self.addDimensionEnvironment(ucId,'usecase',environmentName)
       self.addUseCaseConditions(ucId,environmentName,cProperties.preconditions(),cProperties.postconditions())
       self.addUseCaseSteps(ucId,environmentName,cProperties.steps())
+      self.addCognitiveAttributes(ucId,environmentName,cProperties.attributes(),cProperties.rationale())
+      self.addUsecaseDefinition(ucId,environmentName,cProperties.definition(),cProperties.average())
+      
     return ucId
 
+    
   def addUseCaseRole(self,ucId,actor):
     self.updateDatabase('call addUseCaseRole(:id,:act)',{'id':ucId,'act':actor},'MySQL error adding use case role') 
 
@@ -3070,7 +3138,9 @@ class MySQLDatabaseProxy:
       self.addDimensionEnvironment(ucId,'usecase',environmentName)
       self.addUseCaseConditions(ucId,environmentName,cProperties.preconditions(),cProperties.postconditions())
       self.addUseCaseSteps(ucId,environmentName,cProperties.steps())
-
+      self.addCognitiveAttributes(ucId,environmentName,cProperties.attributes(),cProperties.rationale())
+      self.addUsecaseDefinition(ucId,environmentName,cProperties.definition(),cProperties.average())
+      
   def deleteUseCase(self,ucId):
     self.deleteObject(ucId,'usecase')
     
@@ -4669,23 +4739,23 @@ class MySQLDatabaseProxy:
 
   def removeUseCaseContributions(self,ucId): self.updateDatabase('call removeUseCaseContributions(:id)',{'id':ucId},'MySQL error removing use case contribution')
 
-  def getDataFlows(self,dfName='',fromName='',fromType='',toName='',toType='',envName=''):
-    dfRows = self.responseList('call getDataFlows(:df,:fromName,:fromType,:toName,:toType,:env)',{'df':dfName,'fromName':fromName,'fromType':fromType,'toName':toName,'toType':toType,'env':envName},'MySQL error getting data flows')
+  def getDataFlows(self,dfName='',envName=''):
+    dfRows = self.responseList('call getDataFlows(:df,:env)',{'df':dfName,'env':envName},'MySQL error getting data flows')
     dataFlows = []
     for dfName,dfType,envName,fromName,fromType,toName,toType in dfRows:
       tags = self.getDataFlowTags(dfName,fromType,fromName,toType,toName,envName)
-      dfAssets = self.getDataFlowAssets(dfName,fromName,fromType,toName,toType,envName)
-      dfObs = self.getDataFlowObstacles(dfName,fromName,fromType,toName,toType,envName)
+      dfAssets = self.getDataFlowAssets(dfName,envName)
+      dfObs = self.getDataFlowObstacles(dfName,envName)
       parameters = DataFlowParameters(dfName,dfType,envName,fromName,fromType,toName,toType,dfAssets,dfObs,tags)
       df = ObjectFactory.build(-1,parameters)
       dataFlows.append(df)
     return dataFlows
 
-  def getDataFlowAssets(self,dfName,fromName,fromType,toName,toType,envName):
-    return self.responseList('call getDataFlowAssets(:df,:fromName,:fromType,:toName,:toType,:env)',{'df':dfName,'fromName':fromName,'fromType':fromType,'toName':toName,'toType':toType,'env':envName},'MySQL error getting assets for data flow ' + dfName)
+  def getDataFlowAssets(self,dfName,envName):
+    return self.responseList('call getDataFlowAssets(:df,:env)',{'df':dfName,'env':envName},'MySQL error getting assets for data flow ' + dfName)
 
-  def getDataFlowObstacles(self,dfName,fromName,fromType,toName,toType,envName):
-    return self.responseList('call getDataFlowObstacles(:df,:fromName,:fromType,:toName,:toType,:env)',{'df':dfName,'fromName':fromName,'fromType':fromType,'toName':toName,'toType':toType,'env':envName},'MySQL error getting obstacles for data flow ' + dfName)
+  def getDataFlowObstacles(self,dfName,envName):
+    return self.responseList('call getDataFlowObstacles(:df,:env)',{'df':dfName,'env':envName},'MySQL error getting obstacles for data flow ' + dfName)
 
 
   def addDataFlow(self,parameters):
@@ -4713,7 +4783,7 @@ class MySQLDatabaseProxy:
     obsName,kwd,dfoContext = dfOb
     self.updateDatabase('call addDataFlowObstacle(:df,:env,:fromType,:fromName,:toType,:toName,:ob,:kwd,:dfoContext)',{'df':dfName,'env':envName,'fromType':fromType,'fromName':fromName,'toType':toType,'toName':toName,'ob':obsName,'kwd':kwd,'dfoContext':dfoContext},'MySQL error adding data flow obstacle')
 
-  def updateDataFlow(self,oldDfName,oldFromName,oldFromType,oldToName,oldToType,oldEnvName,parameters):
+  def updateDataFlow(self,oldDfName,oldEnvName,parameters):
     dfName = parameters.name()
     dfType = parameters.type()
     envName = parameters.environment()
@@ -4724,17 +4794,17 @@ class MySQLDatabaseProxy:
     dfAssets = parameters.assets()
     dfObs = parameters.obstacles()
     tags = parameters.tags()
-    session = self.updateDatabase('call deleteDataFlowAssets(:df,:fromName,:fromType,:toName,:toType,:env)',{'df':oldDfName,'fromName':fromName,'fromType':fromType,'toName':toName,'toType':toType,'env':oldEnvName},'MySQL error deleting data flow assets',None,False)
-    self.updateDatabase('call deleteDataFlowObstacles(:df,:fromName,:fromType,:toName,:toType,:env)',{'df':oldDfName,'fromName':fromName,'fromType':fromType,'toName':toName,'toType':toType,'env':oldEnvName},'MySQL error deleting data flow obstacles',session,False)
-    self.updateDatabase('call updateDataFlow(:oldDfName,:oldFromName,:oldFromType,:oldToName,:oldToType,:oldEnvName,:dfName,:fromName,:fromType,:toName,:toType,:envName,:dfType)',{'oldDfName':oldDfName,'oldFromName':oldFromName,'oldFromType':oldFromType,'oldToName':oldToName,'oldToType':oldToType,'oldEnvName':oldEnvName,'dfName':dfName,'fromName':fromName,'fromType':fromType,'toName':toName,'toType':toType,'envName':envName,'dfType':dfType},'MySQL error updating data flow',session)
+    session = self.updateDatabase('call deleteDataFlowAssets(:df,:env)',{'df':oldDfName,'env':oldEnvName},'MySQL error deleting data flow assets',None,False)
+    self.updateDatabase('call deleteDataFlowObstacles(:df,:env)',{'df':oldDfName,'env':oldEnvName},'MySQL error deleting data flow obstacles',session,False)
+    self.updateDatabase('call updateDataFlow(:oDf,:nDf,:dfType,:oEnv,:nEnv,:fName,:fType,:tName,:tType)',{'oDf':oldDfName,'nDf':dfName,'dfType':dfType,'oEnv':oldEnvName,'nEnv':envName,'fName':fromName,'fType':fromType,'tName':toName,'tType':toType},'MySQL error updating data flow',session)
     self.addDataFlowTags(dfName,fromType,fromName,toType,toName,envName,tags)
     for dfAsset in dfAssets:
       self.addDataFlowAsset(dfName,envName,fromType,fromName,toType,toName,dfAsset)
     for dfOb in dfObs:
       self.addDataFlowObstacle(dfName,envName,fromType,fromName,toType,toName,dfOb)
 
-  def deleteDataFlow(self,dfName,fromName,fromType,toName,toType,envName):
-    self.updateDatabase('call deleteDataFlow(:df,:fromName,:fromType,:toName,:toType,:env)',{'df':dfName,'fromName':fromName,'fromType':fromType,'toName':toName,'toType':toType,'env':envName},'MySQL Error deleting data flow')
+  def deleteDataFlow(self,dfName,envName):
+    self.updateDatabase('call deleteDataFlow(:df,:env)',{'df':dfName,'env':envName},'MySQL Error deleting data flow')
 
   def dataFlowDiagram(self,envName,filterType = 'None',filterElement = ''):
     return self.responseList('call dataFlowDiagram(:env,:ft,:fe)',{'env':envName,'ft':filterType,'fe':filterElement},'MySQL error getting data flow diagram')
@@ -5005,64 +5075,3 @@ class MySQLDatabaseProxy:
 
   def controlStructure(self,envName,filterElement = ''):
     return self.responseList('call controlStructure(:env,:fe)',{'env':envName,'fe':filterElement},'MySQL error getting control structure')
-
-  def validateForExport(self):
-    return self.responseList('call invalidObjectNames()',{},'MySQL error getting invalid object names')[0]
-
-  def addUserStory(self,parameters):
-    parameters.validate()
-    usName = parameters.name()
-    usAuth = parameters.author()
-    roleName = parameters.role()
-    usDesc = parameters.description()
-    ugName = parameters.userGoal()
-    tags = parameters.tags()
-    usId = self.newId()
-    self.updateDatabase('call addUserStory(:id,:name,:auth,:role,:desc,:ug)',{'id':usId,'name':usName,'auth':usAuth,'role':roleName,'desc':usDesc,'ug':ugName},'MySQL error adding user story')
-    self.addTags(usName,'userstory',tags)
-
-    for ac in parameters.acceptanceCriteria():
-      self.addUserStoryAcceptanceCriteria(usId,ac)
-    return usId
-
-  def addUserStoryAcceptanceCriteria(self,usId,usAc):
-    self.updateDatabase('call addUserStoryAcceptanceCriteria(:usId,:usAc)',{'usId':usId,'usAc':usAc,},'MySQL error adding acceptance criteria to user story')
-
-  
-  def updateUserStory(self,parameters):
-    parameters.validate()
-    usId = parameters.id()
-    usName = parameters.name()
-    usAuth = parameters.author()
-    roleName = parameters.role()
-    usDesc = parameters.description()
-    ugName = parameters.userGoal()
-    tags = parameters.tags()
-    session = self.updateDatabase('call deleteUserStoryComponents(:us)',{'us':usId},'MySQL error deleting user story components',None,False)
-    self.updateDatabase('call updateUserStory(:id,:name,:auth,:role,:desc,:ug)',{'id':usId,'name':usName,'auth':usAuth,'role':roleName,'desc':usDesc,'ug':ugName},'MySQL error adding user story',session)
-    self.addTags(usName,'userstory',tags)
-
-    for ac in parameters.acceptanceCriteria():
-      self.addUserStoryAcceptanceCriteria(usId,ac)
-
-  def deleteUserStory(self,usId):
-    self.deleteObject(usId,'userstory')
-  
-  def getUserStories(self,constraintId = -1):
-    usRows = self.responseList('call getUserStories(:id)',{'id':constraintId},'MySQL error getting user stories')
-    uss = []
-    for usId,usName,usAuth,roleName,usDesc,ugName in usRows:
-      tags = self.getTags(usName,'userstory')
-      ac = self.userStoryAcceptanceCriteria(usName)
-      uss.append(UserStory(usId,usName,usAuth,roleName,usDesc,ugName,ac,tags))
-    return uss
-
-  def userStoryAcceptanceCriteria(self,usName):
-    return self.responseList('call userStoryAcceptanceCriteria(:usName)',{'usName':usName},'MySQL error getting user story acceptance criteria')
-
-  def storiesToXml(self,includeHeader=True):
-    return self.responseList('call storiesToXml(:head)',{'head' : includeHeader},'MySQL error exporting stories to XML')[0]
-
-  def roleUserGoals(self,roleName):
-    return self.responseList('call roleUserGoals(:name)',{'name':roleName},'MySQL error getting user goals for role ' + roleName)
-
