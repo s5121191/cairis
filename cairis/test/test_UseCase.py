@@ -59,10 +59,14 @@ class UseCaseTest(unittest.TestCase):
     ucEnvName = ucEnv["theName"]
     ucPre = ucEnv["thePreconditions"]
     ucPost = ucEnv["thePostconditions"]
+    ucAttribute = ucEnv["theAttributes"]
+    ucRationale = ucEnv["theRationale"]
+    ucAverage = ucEnv["theAverage"]
+    
     ss = Steps()
     for ucStep in ucEnv["theFlow"]:
       ss.append(Step(ucStep["theDescription"]))  
-    ucep = UseCaseEnvironmentProperties(ucEnvName,ucPre,ss,ucPost)
+    ucep = UseCaseEnvironmentProperties(ucEnvName,ucPre,ss,ucPost,ucAttribute,ucRationale,ucAverage)
     iuc = UseCaseParameters(ucName,ucAuthor,ucCode,[ucActor],ucDesc,[],[ucep])
     b = Borg()
     b.dbProxy.addUseCase(iuc) 
@@ -78,7 +82,18 @@ class UseCaseTest(unittest.TestCase):
     self.assertEqual(iuc.author(),ouc.author())
     self.assertEqual(iuc.environmentProperties()[0].preconditions(),ouc.environmentProperties()[0].preconditions())
     self.assertEqual(iuc.environmentProperties()[0].postconditions(),ouc.environmentProperties()[0].postconditions())
-
+    self.assertEqual(iuc.environmentProperties()[0].attributes()[0],ouc.environmentProperties()[0].attributes()[0])
+    self.assertEqual(iuc.environmentProperties()[0].attributes()[1],ouc.environmentProperties()[0].attributes()[1])
+    self.assertEqual(iuc.environmentProperties()[0].attributes()[2],ouc.environmentProperties()[0].attributes()[2])
+    self.assertEqual(iuc.environmentProperties()[0].attributes()[3],ouc.environmentProperties()[0].attributes()[3])
+    self.assertEqual(iuc.environmentProperties()[0].attributes()[4],ouc.environmentProperties()[0].attributes()[4])
+    self.assertEqual(iuc.environmentProperties()[0].rationale()[0],ouc.environmentProperties()[0].rationale()[0])
+    self.assertEqual(iuc.environmentProperties()[0].rationale()[1],ouc.environmentProperties()[0].rationale()[1])
+    self.assertEqual(iuc.environmentProperties()[0].rationale()[2],ouc.environmentProperties()[0].rationale()[2])
+    self.assertEqual(iuc.environmentProperties()[0].rationale()[3],ouc.environmentProperties()[0].rationale()[3])
+    self.assertEqual(iuc.environmentProperties()[0].rationale()[4],ouc.environmentProperties()[0].rationale()[4])
+    self.assertEqual(iuc.environmentProperties()[0].average(),ouc.environmentProperties()[0].average())
+     
     iuc.theName = 'Updated name'
     iuc.setId(ouc.id())
     b.dbProxy.updateUseCase(iuc) 
@@ -93,7 +108,18 @@ class UseCaseTest(unittest.TestCase):
     self.assertEqual(iuc.author(),ouc.author())
     self.assertEqual(iuc.environmentProperties()[0].preconditions(),ouc.environmentProperties()[0].preconditions())
     self.assertEqual(iuc.environmentProperties()[0].postconditions(),ouc.environmentProperties()[0].postconditions())
-
+    self.assertEqual(iuc.environmentProperties()[0].attributes()[0],ouc.environmentProperties()[0].attributes()[0])
+    self.assertEqual(iuc.environmentProperties()[0].attributes()[1],ouc.environmentProperties()[0].attributes()[1])
+    self.assertEqual(iuc.environmentProperties()[0].attributes()[2],ouc.environmentProperties()[0].attributes()[2])
+    self.assertEqual(iuc.environmentProperties()[0].attributes()[3],ouc.environmentProperties()[0].attributes()[3])
+    self.assertEqual(iuc.environmentProperties()[0].attributes()[4],ouc.environmentProperties()[0].attributes()[4])
+    self.assertEqual(iuc.environmentProperties()[0].rationale()[0],ouc.environmentProperties()[0].rationale()[0])
+    self.assertEqual(iuc.environmentProperties()[0].rationale()[1],ouc.environmentProperties()[0].rationale()[1])
+    self.assertEqual(iuc.environmentProperties()[0].rationale()[2],ouc.environmentProperties()[0].rationale()[2])
+    self.assertEqual(iuc.environmentProperties()[0].rationale()[3],ouc.environmentProperties()[0].rationale()[3])
+    self.assertEqual(iuc.environmentProperties()[0].rationale()[4],ouc.environmentProperties()[0].rationale()[4])
+    self.assertEqual(iuc.environmentProperties()[0].average(),ouc.environmentProperties()[0].average())
+    
     b.dbProxy.deleteUseCase(ouc.id())
 
   def tearDown(self):
