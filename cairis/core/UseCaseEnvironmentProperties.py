@@ -23,13 +23,14 @@ from .EnvironmentProperties import EnvironmentProperties
 from .Steps import Steps
 
 class UseCaseEnvironmentProperties(EnvironmentProperties):
-  def __init__(self,environmentName,preCond='',steps = None,postCond='',cAttributes=[0,0,0,0,0],caRationale=[None,None,None,None,None],ucAv=0):
+  def __init__(self,environmentName,preCond='',steps = None,postCond='',cAttributes=[0,0,0,0,0],caRationale=[None,None,None,None,None],ucDef='',ucAv=0):
     EnvironmentProperties.__init__(self,environmentName)
     self.thePreCond = preCond
     self.theSteps = steps
     self.thePostCond = postCond
     self.theAttributes = cAttributes
     self.theRationale = caRationale
+    self.theDefinition = ucDef
     self.theAverage = ucAv
 
   def preconditions(self): return self.thePreCond
@@ -37,4 +38,5 @@ class UseCaseEnvironmentProperties(EnvironmentProperties):
   def postconditions(self): return self.thePostCond
   def attributes(self): return self.theAttributes
   def rationale(self): return self.theRationale
+  def definition(self): return self.theDefinition
   def average(self): return self.theAverage
