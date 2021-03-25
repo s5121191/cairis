@@ -1445,6 +1445,7 @@ CREATE TABLE obstacle_definition (
 CREATE TABLE usecase_definition (
   usecase_id INT NOT NULL,
   environment_id INT NOT NULL,
+  definition VARCHAR(1000) NOT NULL,
   average FLOAT DEFAULT 0,
   PRIMARY KEY(usecase_id,environment_id),
   FOREIGN KEY(usecase_id) REFERENCES usecase(id),
