@@ -3855,6 +3855,8 @@ begin
   delete from usecase_step_requirement_exception where usecase_id = ucId;
   delete from usecase_step_synopsis where usecase_id = ucId;
   delete from usecase_step_tag where usecase_id = ucId;
+  delete from usecase_property where usecase_id = ucId;
+  delete from usecase_definition where usecase_id = ucId;
 end
 //
 
