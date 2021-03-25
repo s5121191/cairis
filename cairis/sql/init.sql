@@ -63,6 +63,10 @@ DROP VIEW IF EXISTS personal_risk;
 DROP VIEW IF EXISTS goal_associations;
 DROP VIEW IF EXISTS riskModel_tagged;
 DROP VIEW IF EXISTS conceptMapModel_all;
+
+DROP TABLE IF EXISTS userstory_tag;
+DROP TABLE IF EXISTS userstory_acceptance_criteria;
+DROP TABLE IF EXISTS userstory;
 DROP TABLE IF EXISTS task_goal_contribution;
 DROP TABLE IF EXISTS trust_boundary_usecase;
 DROP TABLE IF EXISTS trust_boundary_asset;
@@ -86,6 +90,7 @@ DROP TABLE IF EXISTS asset_instance;
 DROP TABLE IF EXISTS location_link;
 DROP TABLE IF EXISTS location;
 DROP TABLE IF EXISTS locations;
+
 DROP TABLE IF EXISTS usecase_step_synopsis;
 DROP TABLE IF EXISTS usecase_pc_contribution;
 DROP TABLE IF EXISTS usecase_tc_contribution;
@@ -115,6 +120,7 @@ DROP TABLE IF EXISTS obstacle_tag;
 DROP TABLE IF EXISTS domainproperty_tag;
 DROP TABLE IF EXISTS countermeasure_tag;
 DROP TABLE IF EXISTS response_tag;
+
 DROP TABLE IF EXISTS component_view_component;
 DROP TABLE IF EXISTS connector;
 DROP TABLE IF EXISTS component_view;
@@ -131,6 +137,7 @@ DROP TABLE IF EXISTS component_template_requirement;
 DROP TABLE IF EXISTS component_template_goal;
 DROP TABLE IF EXISTS component_vulnerability_target;
 DROP TABLE IF EXISTS component_threat_target;
+
 DROP TABLE IF EXISTS document_reference_vulnerability;
 DROP TABLE IF EXISTS document_reference_obstacle;
 DROP TABLE IF EXISTS ice_ic_contribution;
@@ -398,9 +405,9 @@ DROP TABLE IF EXISTS asset_value;
 DROP TABLE IF EXISTS environment;
 DROP TABLE IF EXISTS security_property;
 DROP TABLE IF EXISTS security_property_value;
+DROP TABLE IF EXISTS securityusability_property_value;
 DROP TABLE IF EXISTS cognitive_attribute;
 DROP TABLE IF EXISTS cognitive_attribute_value;
-DROP TABLE IF EXISTS securityusability_property_value;
 DROP TABLE IF EXISTS countermeasure_value;
 DROP TABLE IF EXISTS threat_value;
 DROP TABLE IF EXISTS users;
@@ -3564,6 +3571,33 @@ CREATE TABLE document_reference_obstacle (
   FOREIGN KEY(obstacle_id) REFERENCES obstacle(id)
 ) ENGINE=INNODB; 
 
+CREATE TABLE userstory (
+  id INT NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  author VARCHAR(200) NOT NULL,
+  role_id INT NOT NULL,
+  description VARCHAR(2000) NOT NULL,
+  usergoal_id INT NOT NULL,
+  PRIMARY KEY(id),
+  FOREIGN KEY(role_id) REFERENCES role(id)
+) ENGINE=INNODB;
+
+CREATE TABLE userstory_acceptance_criteria (
+  id INT NOT NULL,
+  userstory_id INT NOT NULL,
+  criteria VARCHAR(2000) NOT NULL,
+  PRIMARY KEY(id),
+  FOREIGN KEY(userstory_id) REFERENCES userstory(id)
+) ENGINE=INNODB;
+
+CREATE TABLE userstory_tag (
+  userstory_id INT NOT NULL,
+  tag_id INT NOT NULL,
+  PRIMARY KEY(userstory_id,tag_id),
+  FOREIGN KEY(userstory_id) REFERENCES userstory(id), 
+  FOREIGN KEY(tag_id) REFERENCES tag(id)
+) ENGINE=INNODB;
+
 delimiter //
 
 create function internalDocumentQuotationString(idName text, startIdx int, endIdx int) 
@@ -4280,7 +4314,7 @@ CREATE VIEW conceptMapModel_all as
 
 
 
-INSERT INTO version (major,minor,patch) VALUES (2,3,3);
+INSERT INTO version (major,minor,patch) VALUES (2,3,8);
 INSERT INTO attributes (id,name) VALUES (103,'did');
 INSERT INTO trace_dimension values (0,'requirement');
 INSERT INTO trace_dimension values (1,'persona');
@@ -4533,6 +4567,7 @@ INSERT INTO role_type(id,name) values(1,'Attacker');
 INSERT INTO role_type(id,name) values(2,'Data Controller');
 INSERT INTO role_type(id,name) values(3,'Data Processor');
 INSERT INTO role_type(id,name) values(4,'Data Subject');
+INSERT INTO role_type(id,name) values(5,'Machine');
 INSERT INTO behavioural_variable(id,name) values (0,'Activities');
 INSERT INTO behavioural_variable(id,name) values (1,'Attitudes');
 INSERT INTO behavioural_variable(id,name) values (2,'Aptitudes');
