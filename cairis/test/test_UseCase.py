@@ -61,12 +61,12 @@ class UseCaseTest(unittest.TestCase):
     ucPost = ucEnv["thePostconditions"]
     ucAttribute = ucEnv["theAttributes"]
     ucRationale = ucEnv["theRationale"]
-    ucAverage = ucEnv["theAverage"]
+    ucAv = ucEnv["theAverage"]
     
     ss = Steps()
     for ucStep in ucEnv["theFlow"]:
       ss.append(Step(ucStep["theDescription"]))  
-    ucep = UseCaseEnvironmentProperties(ucEnvName,ucPre,ss,ucPost,ucAttribute,ucRationale,ucAverage)
+    ucep = UseCaseEnvironmentProperties(ucEnvName,ucPre,ss,ucPost,ucAttribute,ucRationale,ucAv)
     iuc = UseCaseParameters(ucName,ucAuthor,ucCode,[ucActor],ucDesc,[],[ucep])
     b = Borg()
     b.dbProxy.addUseCase(iuc) 
