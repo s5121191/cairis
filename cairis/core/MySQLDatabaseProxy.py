@@ -2338,8 +2338,7 @@ class MySQLDatabaseProxy:
     return (UsecaseDef,UsecaseAvg)
 
   def usecaseAverage(self,UsecaseId,environmentId):
-    row = self.responseList('call usecase_average(:uId,:eId)',{'uId':UsecaseId,'eId':environmentId},'MySQL error getting usecase average')[0]
-    usecaseAttr = row[0]
+    usecaseAttr = self.responseList('call usecase_average(:uId,:eId)',{'uId':UsecaseId,'eId':environmentId},'MySQL error getting usecase average')[0]
     return usecaseAttr
 
   def obstacleCategory(self,obsId,environmentId):
