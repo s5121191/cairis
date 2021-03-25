@@ -61,12 +61,13 @@ class UseCaseTest(unittest.TestCase):
     ucPost = ucEnv["thePostconditions"]
     ucAttribute = ucEnv["theAttributes"]
     ucRationale = ucEnv["theRationale"]
-    ucAv = ucEnv["theAverage"]
+    ucDef = ucEnv["theDefinition"]
+    ucAverage = ucEnv["theAverage"]
     
     ss = Steps()
     for ucStep in ucEnv["theFlow"]:
       ss.append(Step(ucStep["theDescription"]))  
-    ucep = UseCaseEnvironmentProperties(ucEnvName,ucPre,ss,ucPost,ucAttribute,ucRationale,ucAv)
+    ucep = UseCaseEnvironmentProperties(ucEnvName,ucPre,ss,ucPost,ucAttribute,ucRationale,ucDef,ucAverage)
     iuc = UseCaseParameters(ucName,ucAuthor,ucCode,[ucActor],ucDesc,[],[ucep])
     b = Borg()
     b.dbProxy.addUseCase(iuc) 
@@ -92,6 +93,7 @@ class UseCaseTest(unittest.TestCase):
     self.assertEqual(iuc.environmentProperties()[0].rationale()[2],ouc.environmentProperties()[0].rationale()[2])
     self.assertEqual(iuc.environmentProperties()[0].rationale()[3],ouc.environmentProperties()[0].rationale()[3])
     self.assertEqual(iuc.environmentProperties()[0].rationale()[4],ouc.environmentProperties()[0].rationale()[4])
+    self.assertEqual(iuc.environmentProperties()[0].definition(),ouc.environmentProperties()[0].definition()) 
     self.assertEqual(iuc.environmentProperties()[0].average(),ouc.environmentProperties()[0].average())
      
     iuc.theName = 'Updated name'
@@ -118,6 +120,7 @@ class UseCaseTest(unittest.TestCase):
     self.assertEqual(iuc.environmentProperties()[0].rationale()[2],ouc.environmentProperties()[0].rationale()[2])
     self.assertEqual(iuc.environmentProperties()[0].rationale()[3],ouc.environmentProperties()[0].rationale()[3])
     self.assertEqual(iuc.environmentProperties()[0].rationale()[4],ouc.environmentProperties()[0].rationale()[4])
+    self.assertEqual(iuc.environmentProperties()[0].definition(),ouc.environmentProperties()[0].definition())
     self.assertEqual(iuc.environmentProperties()[0].average(),ouc.environmentProperties()[0].average())
     
     b.dbProxy.deleteUseCase(ouc.id())
