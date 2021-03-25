@@ -18,6 +18,7 @@
 */
 
 drop procedure if exists assetProperties;
+drop procedure if exists usecaseAttributes;
 drop procedure if exists suppressedAssetProperties;
 drop procedure if exists threatProperties;
 drop procedure if exists suppressedThreatProperties;
@@ -28,6 +29,7 @@ drop procedure if exists updateAttacker;
 drop procedure if exists updateAsset;
 drop procedure if exists updateClassAssociation;
 drop procedure if exists updateGoalAssociation;
+drop procedure if exists updateUsecaseAssociation;
 drop procedure if exists addAttackerMotive;
 drop procedure if exists addAttackerCapability;
 drop procedure if exists add_attacker_role;
@@ -43,6 +45,7 @@ drop procedure if exists delete_vulnerability;
 drop procedure if exists addAsset;
 drop procedure if exists addClassAssociation;
 drop procedure if exists addGoalAssociation;
+drop procedure if exists addUsecaseAssociation;
 drop procedure if exists addThreat;
 drop procedure if exists updateThreat;
 drop procedure if exists addVulnerability;
@@ -54,9 +57,11 @@ drop procedure if exists addThreatLikelihood;
 drop procedure if exists addVulnerabilitySeverity;
 drop procedure if exists add_threat_properties;
 drop procedure if exists add_asset_properties;
+drop procedure if exists add_usecase_attributes;
 drop procedure if exists add_countermeasure_properties;
 drop procedure if exists delete_threat_properties;
 drop procedure if exists delete_asset_properties;
+drop procedure if exists delete_usecase_attributes;
 drop procedure if exists delete_countermeasure_properties;
 drop procedure if exists attacker_environments;
 drop procedure if exists risk_environments;
@@ -93,6 +98,7 @@ drop procedure if exists threat_attacker;
 drop procedure if exists delete_asset;
 drop procedure if exists delete_classassociation;
 drop procedure if exists delete_goalassociation;
+drop procedure if exists delete_usecaseassociation;
 drop procedure if exists vulnerability_asset;
 drop procedure if exists riskAnalysisModel;
 drop procedure if exists riskModel;
@@ -825,6 +831,8 @@ drop procedure if exists importTemplateAssetIntoEnvironment;
 drop procedure if exists importTemplateAssetIntoComponent;
 drop procedure if exists obstacleProbability;
 drop procedure if exists obstacle_probability;
+drop procedure if exists usecaseaverage;
+drop procedure if exists usecase_average;
 drop procedure if exists candidateGoalObstacles;
 drop procedure if exists addPersonaMotive;
 drop procedure if exists addPersonaCapability;
@@ -1049,6 +1057,8 @@ drop procedure if exists addUserStoryAcceptanceCriteria;
 drop procedure if exists storiesToXml;
 drop procedure if exists roleUserGoals;
 drop procedure if exists synopsisDependents;
+drop function if exists usecase_definition;
+drop procedure if exists addUsecaseDefinition;
 
 
 delimiter //
@@ -1192,6 +1202,108 @@ begin
 end;
 //
 
+create procedure usecaseAttributes(in usecaseId int,in environmentId int)
+begin
+  declare compositeCount int;
+  declare duplicatePolicy varchar(200);
+  declare overridingEnvironmentId int;
+  declare vAttribute int;
+  declare saAttribute int;
+  declare wAttribute int;
+  declare sAttribute int;
+  declare raAttribute int;
+  declare workingVAttribute int default 0;
+  declare workingSAAttribute int default 0;
+  declare workingWAttribute int default 0;
+  declare workingSAttribute int default 0;
+  declare workingRAAttribute int default 0;
+  declare vRationale varchar(4000);
+  declare saRationale varchar(4000);
+  declare wRationale varchar(4000);
+  declare sRationale varchar(4000);
+  declare raRationale varchar(4000);
+  declare workingVRationale varchar(4000);
+  declare workingSARationale varchar(4000);
+  declare workingWRationale varchar(4000);
+  declare workingSRationale varchar(4000);
+  declare workingRARationale varchar(4000);
+  declare done int default 0;
+  declare currentEnvironmentId int;
+  declare attributesCursor cursor for select environment_id from composite_environment where composite_environment_id = environmentId;  
+  declare continue handler for not found set done = 1;
+
+  select count(environment_id) into compositeCount from composite_environment where composite_environment_id = environmentId limit 1;
+  if compositeCount > 0
+  then
+    select dp.name into duplicatePolicy from duplicate_property dp, composite_environment_property ccp where ccp.composite_environment_id = environmentId and ccp.duplicate_property_id = dp.id limit 1;
+    if duplicatePolicy = 'Override'
+    then
+      select overriding_environment_id into overridingEnvironmentId from composite_environment_override where composite_environment_id = environmentId limit 1;
+    end if;
+
+    open attributesCursor;
+    attributes_loop: loop
+      fetch attributesCursor into currentEnvironmentId;
+      if done = 1
+      then
+        leave attributes_loop;
+      end if;
+      select property_value_id,property_rationale into vAttribute,vRationale from usecase_property where usecase_id = usecaseId and property_id = 0 and environment_id = currentEnvironmentId;
+      select property_value_id,property_rationale into saAttribute,saRationale from usecase_property where usecase_id = usecaseId and property_id = 1 and environment_id = currentEnvironmentId;
+      select property_value_id,property_rationale into wAttribute,wRationale from usecase_property where usecase_id = usecaseId and property_id = 2 and environment_id = currentEnvironmentId;
+      select property_value_id,property_rationale into sAttribute,sRationale from usecase_property where usecase_id = usecaseId and property_id = 3 and environment_id = currentEnvironmentId;
+      select property_value_id,property_rationale into raAttribute,raRationale from usecase_property where usecase_id = usecaseId and property_id = 4 and environment_id = currentEnvironmentId;
+      
+      if duplicatePolicy = 'Maximise'
+      then
+        if vAttribute > workingVAttribute then 
+          set workingVAttribute = vAttribute; 
+          set workingVRationale = vRationale; 
+        end if;
+        if saAttribute > workingSAAttribute then 
+          set workingSAAttribute = saAttribute; 
+          set workingSARationale = saRationale; 
+        end if;
+        if wAttribute > workingWAttribute then 
+          set workingWAttribute = wAttribute; 
+          set workingWRationale = wRationale; 
+        end if;
+        if sAttribute > workingSAttribute then 
+          set workingSAttribute = sAttribute; 
+          set workingSRationale = sRationale; 
+        end if;
+        if raAttribute > workingRAAttribute then 
+          set workingRAAttribute = raAttribute; 
+          set workingRARationale = raRationale; 
+        end if;
+      else
+        if currentEnvironmentId = overridingEnvironmentId 
+        then
+          set workingVAttribute = vAttribute;
+          set workingSAAttribute = saAttribute;
+          set workingWAttribute = wAttribute;
+          set workingSAttribute = sAttribute;
+          set workingRAAttribute = raProperty;
+          set workingVRationale = vRationale; 
+          set workingSARationale = saRationale; 
+          set workingWRationale = wRationale; 
+          set workingSRationale = sRationale; 
+          set workingRARationale = raRationale; 
+        end if;
+      end if;
+    end loop attributes_loop;
+    close attributesCursor;
+    select workingVAttribute,workingSAAttribute,workingWAttribute,workingSAttribute,workingRAAttribute,workingVRationale,workingSARationale,workingWRationale,workingSRationale,workingRARationale;
+  else
+    select property_value_id,property_rationale into vAttribute,vRationale from usecase_property where usecase_id = usecaseId and property_id = 0 and environment_id = environmentId;
+    select property_value_id,property_rationale into saAttribute,saRationale from usecase_property where usecase_id = usecaseId and property_id = 1 and environment_id = environmentId;
+    select property_value_id,property_rationale into wAttribute,wRationale from usecase_property where usecase_id = usecaseId and property_id = 2 and environment_id = environmentId;
+    select property_value_id,property_rationale into sAttribute,sRationale from usecase_property where usecase_id = usecaseId and property_id = 3 and environment_id = environmentId;
+    select property_value_id,property_rationale into raAttribute,raRationale from usecase_property where usecase_id = usecaseId and property_id = 4 and environment_id = environmentId;
+    select ifnull(vAttribute,0),ifnull(saAttribute,0),ifnull(wAttribute,0),ifnull(sAttribute,0),ifnull(raAttribute,0),vRationale,saRationale,wRationale,sRationale,raRationale;
+  end if;
+end;
+//
 
 create procedure suppressedAssetProperties(in assetId int,in environmentId int)
 begin
@@ -2159,9 +2271,27 @@ begin
 end
 //
 
+create procedure add_usecase_attributes(in usecaseId int, in environmentName text, in vAttribute int, in saAttribute int, in wAttribute int, in sAttribute int, in raAttribute int, in vRationale text, in saRationale text, in wRationale text, in sRationale text, in raRationale text)
+begin
+  declare environmentId int;
+  select id into environmentId from environment where name = environmentName limit 1;
+  insert into usecase_property(environment_id,usecase_id,property_id,property_value_id,property_rationale) values(environmentId,usecaseId,0,vAttribute,vRationale);
+  insert into usecase_property(environment_id,usecase_id,property_id,property_value_id,property_rationale) values(environmentId,usecaseId,1,saAttribute,saRationale);
+  insert into usecase_property(environment_id,usecase_id,property_id,property_value_id,property_rationale) values(environmentId,usecaseId,2,wAttribute,wRationale);
+  insert into usecase_property(environment_id,usecase_id,property_id,property_value_id,property_rationale) values(environmentId,usecaseId,3,sAttribute,sRationale);
+  insert into usecase_property(environment_id,usecase_id,property_id,property_value_id,property_rationale) values(environmentId,usecaseId,4,raAttribute,raRationale);
+  end
+//
+
 create procedure delete_asset_properties(in assetId int, in environmentId int)
 begin
   delete from asset_property where asset_id = assetId and environment_id = environmentId;
+end
+//
+
+create procedure delete_usecase_attributes(in usecaseId int, in environmentId int)
+begin
+  delete from usecase_property where usecase_id = usecaseId and environment_id = environmentId;
 end
 //
 
@@ -6827,6 +6957,20 @@ begin
 end
 //
 
+create procedure addUsecaseAssociation(in associationId int, in envName text, in usecaseName text, in subUsecaseName text, rationaleName text)
+begin
+  declare environmentId int;
+  declare usecaseId int;
+  declare subUsecaseId int;
+  
+  select id into environmentId from environment where name = envName limit 1;
+  
+    select id into usecaseId from usecase where name = usecaseName;    
+    select id into subUsecaseId from usecase where name = subUsecaseName;    
+    insert into usecase_usecaseassociation(id,environment_id,usecase_id,subUsecase_id,rationale) values(associationId,environmentId,UsecaseId,subUsecaseId,rationaleName);
+end
+//
+
 create procedure updateGoalAssociation(in associationId int,in envName text, in goalName text, in goalDimName text, in aType text, in subGoalName text,in subGoalDimName text,in alternativeId int,rationaleName text)
 begin
   declare environmentId int;
@@ -6950,6 +7094,20 @@ begin
 end
 //
 
+create procedure updateUsecaseAssociation(in associationId int, in envName text, in usecaseName text, in subUsecaseName text, rationaleName text)
+begin
+  declare environmentId int;
+  declare usecaseId int;
+  declare subUsecaseId int;
+  
+  select id into environmentId from environment where name = envName limit 1;
+  
+	select id into usecaseId from usecase where name = usecaseName;    
+	select id into subUsecaseId from usecase where name = subUsecaseName;    
+	update usecase_usecaseassociation set environment_id = environmentId, usecase_id = usecaseId, subUsecase_id = subUsecaseId,rationale = rationaleName where id = associationId;
+end
+//
+
 create procedure delete_goalassociation(in associationId int, in goalName text, in subGoalName text)
 begin
   if goalName = 'goal' and subGoalName = 'goal'
@@ -7009,6 +7167,12 @@ begin
   else
     delete from requirementrole_goalassociation where id = associationId;
   end if;
+end
+//
+
+create procedure delete_usecaseassociation(in associationId int, in usecaseName text, in subUsecaseName text)
+begin
+  delete from usecase_usecaseassociation where id = associationId;
 end
 //
 
@@ -21270,6 +21434,118 @@ begin
       set workingProbability = leafObsProb;
     end if;
   end if;
+end
+//
+
+create procedure usecaseaverage(in UsecaseId int,in envId int, out workingAverage float)
+begin
+  declare done int default 0;
+  declare leafUsecaseId int;
+  declare leafUsecaseAvg float;
+  declare calcUsecaseAvg float;
+  declare andCount int;
+  declare andProb float default 0;
+  declare andCursor cursor for select uc.subUsecase_id from usecase_usecaseassociation uc where uc.usecase_id = UsecaseId and uc.environment_id = envId;
+  declare continue handler for not found set done = 1;
+
+  select count(subUsecase_id) into andCount from usecase_usecaseassociation where usecase_id = UsecaseId and environment_id = envId;
+  if (andCount > 0)
+  then
+    set done = 0;
+    open andCursor;
+    and_loop: loop
+      fetch andCursor into leafUsecaseId;
+      if done = 1
+      then
+        leave and_loop;
+      end if;
+      call usecaseaverage(leafUsecaseId,envId,calcUsecaseAvg);
+      set andProb = andProb * calcUsecaseAvg;
+    end loop and_loop;
+    close andCursor;
+  end if;
+  
+  if (andCount = 0)
+  then
+    select average into workingAverage from usecase_definition where usecase_id = UsecaseId and environment_id = envId;
+  else
+    select average into leafUsecaseAvg from usecase_definition where usecase_id = UsecaseId and environment_id = envId;
+    set workingAverage = andProb;
+    if leafUsecaseAvg > workingAverage
+    then
+      set workingAverage = leafUsecaseAvg;
+    end if;
+  end if;
+end
+//
+
+create function usecase_definition(UsecaseId int,environmentId int) 
+returns varchar(1000)
+deterministic 
+begin
+  declare compositeCount int;
+  declare duplicatePolicy varchar(50);
+  declare overridingEnvironmentId int;
+  declare workingDefinition varchar(1000);
+  declare currentEnvironmentId int;
+  declare currentDefinition varchar(1000);
+  declare definitionName varchar(1000);
+  declare currentEnvName varchar(50);
+  declare done int default 0;
+  declare defCursor cursor for select environment_id,definition from usecase_definition where usecase_id = UsecaseId and environment_id in (select environment_id from composite_environment where composite_environment_id = environmentId);
+  declare continue handler for not found set done = 1;
+
+  select count(environment_id) into compositeCount from composite_environment where composite_environment_id = environmentId limit 1;
+  if compositeCount > 0
+  then
+    select dp.name into duplicatePolicy from duplicate_property dp, composite_environment_property ccp where ccp.composite_environment_id = environmentId and ccp.duplicate_property_id = dp.id limit 1;
+    if duplicatePolicy = 'Override'
+    then
+      select overriding_environment_id into overridingEnvironmentId from composite_environment_override where composite_environment_id = environmentId limit 1;
+    end if;
+    set workingDefinition = '';
+
+    open defCursor;
+    def_loop: loop
+      fetch defCursor into currentEnvironmentId, currentDefinition;
+      if done = 1
+      then
+        leave def_loop;
+      end if;
+      if duplicatePolicy = 'Override'
+      then
+        if currentEnvironmentId = overridingEnvironmentId
+        then
+          set workingDefinition = currentDefinition;
+        end if;
+      else
+        select name into currentEnvName from environment where id = currentEnvironmentId;
+        set workingDefinition = concat(workingDefinition,' [' ,currentEnvName,'] ',currentDefinition);
+      end if;
+    end loop def_loop;
+    close defCursor;
+    set definitionName = workingDefinition; 
+  else
+    select definition into definitionName from usecase_definition where usecase_id = UsecaseId and environment_id = environmentId;
+  end if;
+  return definitionName;
+end
+//
+
+create procedure addUsecaseDefinition(in UsecaseId int,in environmentName text, in defName text, in UsecaseAvg float)
+begin
+  declare environmentId int;
+  select id into environmentId from environment where name = environmentName limit 1;
+  insert into usecase_definition(usecase_id,environment_id,definition,average) values (UsecaseId,environmentId,defName,UsecaseAvg);
+end
+//
+
+create procedure usecase_average(in UsecaseId int, in envId int)
+begin
+  declare usecaseAvg float;
+
+  call usecaseaverage(UsecaseId,envId,usecaseAvg);
+  select usecaseAvg;
 end
 //
 
