@@ -30,7 +30,7 @@
          "thePostconditions" : "Users that are driving cars will not see a video stream...",
          "theAttributes" : [0,0,0,0,0],
          "theRationale" : ["None","None","None","None","None"],
-         "theDefinition" : "abc"
+         "theDefinition" : "abc",
          "theAverage" : 0}
       ]}
   ]
