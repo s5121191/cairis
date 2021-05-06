@@ -298,6 +298,7 @@ api.add_resource(ObjectController.ModelByThreeParametersAPI, '/api/goals/model/e
 api.add_resource(ObjectController.ModelByTwoParametersAPI, '/api/responsibility/model/environment/<path:p1>/role/<path:p2>',endpoint='responsibilitymodel',resource_class_kwargs={'dao' : 'GoalDAO','get_method' : 'get_responsibility_model','renderer' : 'dot', 'model_type' : 'responsibility'})
 api.add_resource(ObjectController.ObjectsByMethodAPI, '/api/goals/association',endpoint='goal_associations',resource_class_kwargs={'dao': 'GoalAssociationDAO', 'get_method' : 'get_goal_associations', 'post_method' : 'add_goal_association', 'path_parameters' : [('environment_name','')]})
 api.add_resource(ObjectController.ObjectsByMethodAndThreeParametersAPI,'/api/goals/association/environment/<path:p1>/goal/<path:p2>/subgoal/<path:p3>',endpoint='goal_association',resource_class_kwargs={'dao' : 'GoalAssociationDAO', 'get_method' : 'get_goal_association', 'put_method' : 'update_goal_association', 'del_method' : 'delete_goal_association'})
+api.add_resource(ObjectController.ObjectsByMethodAndTwoParametersAPI,'/api/goals/name/<path:p1>/environment/<path:p2>/concerns',endpoint='goal_concerns',resource_class_kwargs={'dao' : 'GoalDAO', 'get_method' : 'get_goal_concerns'})
 
 
 # Goal contribution routes
@@ -362,6 +363,10 @@ api.add_resource(ObjectController.ObjectsByMethodAPI, '/api/personas/types',endp
 api.add_resource(ObjectController.ObjectsAPI, '/api/persona_characteristics',endpoint='persona_characteristics',resource_class_kwargs={'dao': 'PersonaCharacteristicDAO'})
 api.add_resource(ObjectController.ObjectByNameAPI, '/api/persona_characteristics/name/<path:name>',endpoint='persona_characteristic',resource_class_kwargs={'dao' : 'PersonaCharacteristicDAO'})
 api.add_resource(ObjectController.ObjectsSummaryAPI, '/api/persona_characteristics/summary',endpoint='personacharacteristicssummary',resource_class_kwargs={'dao' : 'PersonaCharacteristicDAO'})
+
+# Policy Statement routes
+api.add_resource(ObjectController.ObjectsAPI, '/api/policy_statements',endpoint='policy_statements',resource_class_kwargs={'dao': 'PolicyStatementDAO'})
+api.add_resource(ObjectController.ObjectsByMethodAndFiveParametersAPI,'/api/policy_statements/goal/<path:p1>/environment/<path:p2>/subject/<path:p3>/access_type/<path:p4>/resource/<path:p5>',endpoint='policy_statement',resource_class_kwargs={'dao' : 'PolicyStatementDAO', 'get_method' : 'get_object_by_name', 'put_method' : 'update_object', 'del_method' : 'delete_object'})
 
 # Project routes
 api.add_resource(ObjectController.ObjectsByMethodAPI, '/api/settings',endpoint='project_settings',resource_class_kwargs={'dao' : 'ProjectDAO','get_method' : 'get_settings','put_method' : 'apply_settings'})
@@ -468,6 +473,7 @@ api.add_resource(ObjectController.ObjectByNameAPI, '/api/usecases/name/<path:nam
 api.add_resource(ObjectController.ObjectsSummaryAPI, '/api/usecases/summary',endpoint='usecasessummary',resource_class_kwargs={'dao' : 'UseCaseDAO'})
 api.add_resource(ObjectController.ObjectsByMethodAndParameterAPI, '/api/usecases/name/<path:parameter_string>/requirements',endpoint='usecaserequirements',resource_class_kwargs={'dao' : 'UseCaseDAO', 'get_method' : 'get_usecase_requirements'})
 api.add_resource(ObjectController.ObjectsByMethodAndTwoParametersAPI, '/api/usecases/name/<path:p1>/environment/<path:p2>/goals',endpoint='usecasegoals', resource_class_kwargs={'dao' : 'UseCaseDAO', 'get_method' : 'get_usecase_goals'})
+api.add_resource(ObjectController.ObjectsByMethodAndTwoParametersAPI, '/api/usecases/model/environment/<path:p1>/filter_name/<path:p2>',endpoint='usecasemodel',resource_class_kwargs={'dao' : 'UseCaseDAO','get_method' : 'get_hta_model','renderer' : 'dot'})
 
 # User goal routes
 api.add_resource(ObjectController.ObjectsAPI, '/api/user_goals',endpoint='user_goals',resource_class_kwargs={'dao': 'UserGoalDAO'})
