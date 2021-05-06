@@ -288,3 +288,21 @@ class UseCaseDAO(CairisDAO):
     except ARMException as ex:
       self.close()
       raise ARMHTTPError(ex)
+
+  def get_hta_model(self, environment_name, filter_element, pathValues = []):
+    fontName, fontSize, apFontName = get_fonts(session_id=self.session_id)
+    if filter_element == 'all':
+      filter_element = ''
+    try:
+      gcs = self.db_proxy.getUseCaseContributions(environment_name,filter_element)
+      ugm = UseCaseModel(gcs,environment_name,self.db_proxy,font_name=fontName, font_size=fontSize)
+      dot_code = ugm.graph()
+      if not dot_code:
+        raise ObjectNotFoundHTTPError('The HTA model')
+      return dot_code
+    except DatabaseProxyException as ex:
+      self.close()
+      raise ARMHTTPError(ex)
+    except ARMException as ex:
+      self.close()
+      raise ARMHTTPError(ex)
