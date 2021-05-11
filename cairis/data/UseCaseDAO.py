@@ -29,6 +29,7 @@ from cairis.core.ReferenceContribution import ReferenceContribution
 from cairis.data.CairisDAO import CairisDAO
 from cairis.tools.JsonConverter import json_serialize, json_deserialize
 from cairis.tools.ModelDefinitions import UseCaseModel, UseCaseEnvironmentPropertiesModel, UseCaseContributionModel
+from cairis.misc.UseCaseModel import UseCaseModel 
 from cairis.tools.SessionValidator import check_required_keys, get_fonts
 from cairis.tools.PseudoClasses import StepAttributes, StepsAttributes, ExceptionAttributes, CharacteristicReferenceContribution
 import http.client
@@ -289,20 +290,26 @@ class UseCaseDAO(CairisDAO):
       self.close()
       raise ARMHTTPError(ex)
 
-  def get_hta_model(self, environment_name, filter_element, pathValues = []):
+def get_hta_model(self, environment_name,usecaseName,sub_usecaseName, pathValues):
     fontName, fontSize, apFontName = get_fonts(session_id=self.session_id)
-    if filter_element == 'all':
-      filter_element = ''
+    is_top_level = pathValues[0]
+    if usecaseName == 'all':
+      usecaseName = ''
+    if sub_usecaseName == 'all':
+      sub_usecaseName = ''
     try:
-      gcs = self.db_proxy.getUseCaseContributions(environment_name)
-      ugm = UseCaseModel(gcs,environment_name,self.db_proxy,font_name=fontName, font_size=fontSize)
-      dot_code = ugm.graph()
-      if not dot_code:
-        raise ObjectNotFoundHTTPError('The HTA model')
+      associationDictionary = {}
+      ucFilter = 0
+      sub_ucFilter = 0
+      if usecaseName != '': 
+        ucFilter = 1
+      if sub_usecaseName != '': 
+        sub_ucFilter = 1
+        usecaseName = sub_usecaseName
+      associationDictionary = self.db_proxy.UseCaseModel(environment_name,usecase_name,is_top_level,ucFilter)
+      associations = UseCaseModel(list(associationDictionary.values()), environment_name, 'usecase', usecase_name, db_proxy=self.db_proxy, font_name=fontName, font_size=fontSize)
+      dot_code = associations.graph()
       return dot_code
     except DatabaseProxyException as ex:
-      self.close()
-      raise ARMHTTPError(ex)
-    except ARMException as ex:
       self.close()
       raise ARMHTTPError(ex)
