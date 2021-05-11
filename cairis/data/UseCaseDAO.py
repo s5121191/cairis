@@ -294,7 +294,7 @@ class UseCaseDAO(CairisDAO):
     if filter_element == 'all':
       filter_element = ''
     try:
-      gcs = self.db_proxy.getUseCaseContributions(environment_name,filter_element)
+      gcs = self.db_proxy.getUseCaseContributions(environment_name)
       ugm = UseCaseModel(gcs,environment_name,self.db_proxy,font_name=fontName, font_size=fontSize)
       dot_code = ugm.graph()
       if not dot_code:
