@@ -29,7 +29,6 @@ from cairis.core.ReferenceContribution import ReferenceContribution
 from cairis.data.CairisDAO import CairisDAO
 from cairis.tools.JsonConverter import json_serialize, json_deserialize
 from cairis.tools.ModelDefinitions import UseCaseModel, UseCaseEnvironmentPropertiesModel, UseCaseContributionModel
-from cairis.misc.UseCaseModel import UseCaseModel 
 from cairis.tools.SessionValidator import check_required_keys, get_fonts
 from cairis.tools.PseudoClasses import StepAttributes, StepsAttributes, ExceptionAttributes, CharacteristicReferenceContribution
 import http.client
