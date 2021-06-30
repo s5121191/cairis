@@ -315,7 +315,6 @@ def extractModel(session_id = None,ignoreValidityCheck = 0,dbProxy = None):
   xmlBuf+= proxy.misusabilityToXml(0)[0] + '\n\n'
   xmlBuf+= proxy.dataflowsToXml(0)[0] + '\n\n'
   xmlBuf+= proxy.locationsToXml()[0] + '\n\n'
-  xmlBuf+= proxy.storiesToXml(0)[0] + '\n\n</cairis_model>'
   return xmlBuf
 
 def exportModel(outFile = None,session_id = None, ignoreValidityCheck = 0,dbProxy = None):
