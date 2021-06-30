@@ -846,7 +846,6 @@ def importModelFile(importFile,isOverwrite = 1,session_id = None):
     modelTxt += importMisusabilityFile(importFile,session_id) + ' '
     modelTxt += importDataflowsFile(importFile,session_id) + ' '
     modelTxt += importLocationsFile(importFile,session_id) + ' '
-    modelTxt += importStoriesFile(importFile,session_id)
     return modelTxt
   except xml.sax.SAXException as e:
     raise ARMException("Error parsing" + importFile + ": " + e.getMessage())
